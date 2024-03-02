@@ -15,6 +15,7 @@ export interface User {
     phone: string;
     department: string;
     qq: string;
+    created_at?: number;
 }
 
 export function createUserFromAuthenticatedUser(user: AuthenticatedUser): User {

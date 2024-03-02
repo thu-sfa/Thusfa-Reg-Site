@@ -1,124 +1,167 @@
 <script setup lang="ts">
-import { type User } from '@/models';
-import { axiosSymbol } from '@/symbols';
-import { watch, reactive, ref, inject, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { NCard, NSpin, NDataTable, NInput, NButton, type DataTableColumns, useMessage } from 'naive-ui';
-import { computed } from 'vue';
+import { type User } from "@/models";
+import { axiosSymbol } from "@/symbols";
+import { watch, reactive, ref, inject, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import dayjs from "dayjs";
+import {
+    NCard,
+    NSpin,
+    NDataTable,
+    NInput,
+    NButton,
+    type DataTableColumns,
+    useMessage,
+} from "naive-ui";
+import { computed } from "vue";
 
-const axios = inject(axiosSymbol)
-const router = useRouter()
+const axios = inject(axiosSymbol);
+const router = useRouter();
 
-type ValidationStatus = 'validating' | 'success' | 'error';
+type ValidationStatus = "validating" | "success" | "error";
 
-const validationStatus = ref<ValidationStatus>('validating');
+const validationStatus = ref<ValidationStatus>("validating");
 
 onMounted(() => {
-  // validate role
-  if(!axios) {
-    throw new Error('axios is not injected');
-  }
 
-  axios.get('validate_admin_login').then(() => {
-    validationStatus.value = 'success'
-  })
-  .catch(() => {
-    validationStatus.value = 'error'
-    // goto url in 1 sec
-    setTimeout(() => {
-      window.open(
-        import.meta.env.VITE_URL_ADMIN_REDIRECT,
-        '_self'
-      )
-    }, 1000);
-  });
+    // validate role
+    if (!axios) {
+        throw new Error("axios is not injected");
+    }
+
+    axios
+        .get("validate_admin_login")
+        .then(() => {
+            validationStatus.value = "success";
+        })
+        .catch(() => {
+            validationStatus.value = "error";
+            // goto url in 1 sec
+            setTimeout(() => {
+                window.open(import.meta.env.VITE_URL_ADMIN_REDIRECT, "_self");
+            }, 1000);
+        });
 });
 
-const search = ref('');
+const search = ref("");
 
 const users = reactive<User[]>([]);
 
-const usersDisplay = computed(() => {
-  if (search.value === '') {
-    return users;
-  }
-  return users.filter((user) => {
-    return user.name.includes(search.value) || user.thuid.includes(search.value) || user.department.includes(search.value) || user.qq.includes(search.value) || user.phone.includes(search.value) || user.email.includes(search.value) || user.qq.includes(search.value);
-  });
-})
+const usersData = computed(() => {
+    // parse user.created_at to readable string
+    return users.map((user) => {
+        return {
+            ...user,
+            created_at: user.created_at
+                ? dayjs.unix(user.created_at).format("YYYY-MM-DD HH:mm:ss")
+                : "",
+        };
+    });
+});
 
-const columns:DataTableColumns<User> = [
+const usersDisplay = computed(() => {
+    if (search.value === "") {
+        return usersData.value;
+    }
+    return usersData.value.filter((user) => {
+        return (
+            user.name.includes(search.value) ||
+            user.thuid.includes(search.value) ||
+            user.department.includes(search.value) ||
+            user.qq.includes(search.value) ||
+            user.phone.includes(search.value) ||
+            user.email.includes(search.value) ||
+            user.qq.includes(search.value)
+        );
+    });
+});
+
+const columns: DataTableColumns<User> = [
     {
-        title: '姓名',
-        key: 'name',
+        title: "姓名",
+        key: "name",
     },
     {
-        title: '学号',
-        key: 'thuid',
+        title: "学号",
+        key: "thuid",
     },
     {
-        title: '学院',
-        key: 'department',
+        title: "学院",
+        key: "department",
     },
     {
-        title: 'QQ',
-        key: 'qq',
+        title: "QQ",
+        key: "qq",
     },
     {
-        title: '手机号',
-        key: 'phone',
+        title: "手机号",
+        key: "phone",
     },
-]
+    {
+        title: "注册时间",
+        key: "created_at",
+    },
+];
 
 const msg = useMessage();
 
-watch(
-    validationStatus,
-    (newStatus) => {
-      if (newStatus === 'success') {
-        axios!.get('/get_users').then((res) => {
-          users.splice(0, users.length, ...res.data);
-        }).catch((err) => {
-          router.push({
-            name: 'error',
-            query: {
-              code: err.response.status,
-              msg: err.response.data
-            }
-          });
-        });
-      }
+watch(validationStatus, (newStatus) => {
+    if (newStatus === "success") {
+        axios!
+            .get("/get_users")
+            .then((res) => {
+                users.splice(0, users.length, ...res.data);
+            })
+            .catch((err) => {
+                router.push({
+                    name: "error",
+                    query: {
+                        code: err.response.status,
+                        msg: err.response.data,
+                    },
+                });
+            });
     }
-)
+});
 
-function reloadAdmin(){
-  axios?.post('/reload_admin').then(() => {
-    msg.success('成功刷新管理员列表');
-    // refresh current page
-    window.location.reload();
-  }).catch((err) => {
-    msg.error(err.response.data);
-  })
+function reloadAdmin() {
+    axios
+        ?.post("/reload_admin")
+        .then(() => {
+            msg.success("成功刷新管理员列表");
+            // refresh current page
+            window.location.reload();
+        })
+        .catch((err) => {
+            msg.error(err.response.data);
+        });
 }
-
 </script>
 
 <template>
     <div>
-        <div class="topbar" v-if="validationStatus==='success'">
-          <p class="count">{{ usersDisplay.length }}</p>
-          <div class="actions">
-            <div class="search">
-            <n-input v-model:value="search" placeholder="搜索" style="width: 200px; margin: 10px 0 10px 20px" />
+        <div class="topbar" v-if="validationStatus === 'success'">
+            <p class="count">{{ usersDisplay.length }}</p>
+            <div class="actions">
+                <div class="search">
+                    <n-input
+                        v-model:value="search"
+                        placeholder="搜索"
+                        style="width: 200px; margin: 10px 0 10px 20px"
+                    />
+                </div>
+                <n-button @click="reloadAdmin">{{
+                    $t("reload_admin")
+                }}</n-button>
             </div>
-            <n-button @click="reloadAdmin">{{ $t('reload_admin') }}</n-button>
-          </div>
         </div>
-        <n-card v-if="validationStatus!=='success'">
+        <n-card v-if="validationStatus !== 'success'">
             <n-spin size="large" style="margin: 20px auto 0 auto" />
             <template #header>
-                <h1 v-if="validationStatus==='validating'">{{ $t('adminview.validating') }}</h1>
-                <h1 v-else>{{ $t('adminview.redirecting') }}</h1>
+                <h1 v-if="validationStatus === 'validating'">
+                    {{ $t("adminview.validating") }}
+                </h1>
+                <h1 v-else>{{ $t("adminview.redirecting") }}</h1>
             </template>
         </n-card>
         <div v-else class="container">
@@ -128,7 +171,6 @@ function reloadAdmin(){
 </template>
 
 <style scoped>
-
 .container {
     width: 100%;
     max-width: 1200px;
@@ -167,5 +209,4 @@ function reloadAdmin(){
     align-items: center;
     margin-right: 10px;
 }
-
 </style>
