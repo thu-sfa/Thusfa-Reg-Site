@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type User } from "@/models";
+import { type AllUsersResponse, type Pagination, type User } from "@/models";
 import { axiosSymbol } from "@/symbols";
 import { watch, reactive, ref, inject, onMounted } from "vue";
 import { useRouter } from "vue-router";
@@ -22,8 +22,29 @@ type ValidationStatus = "validating" | "success" | "error";
 
 const validationStatus = ref<ValidationStatus>("validating");
 
-onMounted(() => {
+async function queryData(pagination: Pagination): Promise<AllUsersResponse> {
+    loading.value = true;
+    return axios!
+        .get("/get_users", {
+            params: pagination,
+        })
+        .then((res) => {
+            loading.value = false;
+            return res.data;
+        })
+        .catch((err) => {
+            router.push({
+                name: "error",
+                query: {
+                    code: err.response.status,
+                    msg: err.response.data,
+                },
+            });
+            return Promise.reject(err);
+        });
+}
 
+onMounted(() => {
     // validate role
     if (!axios) {
         throw new Error("axios is not injected");
@@ -53,7 +74,10 @@ const usersData = computed(() => {
         return {
             ...user,
             created_at: user.created_at
-                ? dayjs.unix(user.created_at).format("YYYY-MM-DD HH:mm:ss")
+                ? /** in timezone UTC+8  */ dayjs
+                      .unix(user.created_at)
+                      .subtract(8, "hour")
+                      .format("YYYY-MM-DD HH:mm:ss")
                 : "",
         };
     });
@@ -103,26 +127,36 @@ const columns: DataTableColumns<User> = [
     },
 ];
 
+const loading = ref(false);
+
+const pagination = reactive({
+    page: 1,
+    pageSize: 50,
+    pageCount: 1,
+});
+
 const msg = useMessage();
 
 watch(validationStatus, (newStatus) => {
     if (newStatus === "success") {
-        axios!
-            .get("/get_users")
-            .then((res) => {
-                users.splice(0, users.length, ...res.data);
-            })
-            .catch((err) => {
-                router.push({
-                    name: "error",
-                    query: {
-                        code: err.response.status,
-                        msg: err.response.data,
-                    },
-                });
-            });
+        queryData({
+            page: 1,
+            per_page: pagination.pageSize,
+        }).then((res) => {
+            users.push(...res.users);
+            pagination.pageCount = res.total / pagination.pageSize;
+        });
     }
 });
+
+function handlePageChange(current: number) {
+    queryData({
+        page: current,
+        per_page: pagination.pageSize,
+    }).then((res) => {
+        users.splice(0, users.length, ...res.users);
+    });
+}
 
 function reloadAdmin() {
     axios
@@ -165,7 +199,14 @@ function reloadAdmin() {
             </template>
         </n-card>
         <div v-else class="container">
-            <n-data-table :columns="columns" :data="usersDisplay" />
+            <n-data-table
+                remote
+                :pagination="pagination"
+                :loading="loading"
+                :columns="columns"
+                :data="usersDisplay"
+                @update:page="handlePageChange"
+            />
         </div>
     </div>
 </template>

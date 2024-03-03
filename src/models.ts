@@ -26,3 +26,13 @@ export function createUserFromAuthenticatedUser(user: AuthenticatedUser): User {
         qq: '',
     }
 }
+
+export interface Pagination {
+    per_page: number;
+    page: number;
+}
+
+export interface AllUsersResponse {
+    users: User[];
+    total: number;
+}
