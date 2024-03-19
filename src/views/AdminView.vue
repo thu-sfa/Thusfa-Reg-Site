@@ -144,7 +144,7 @@ watch(validationStatus, (newStatus) => {
             per_page: pagination.pageSize,
         }).then((res) => {
             users.push(...res.users);
-            pagination.pageCount = res.total / pagination.pageSize;
+            pagination.pageCount = Math.ceil(res.total / pagination.pageSize);
         });
     }
 });
@@ -154,6 +154,7 @@ function handlePageChange(current: number) {
         page: current,
         per_page: pagination.pageSize,
     }).then((res) => {
+        pagination.page = current
         users.splice(0, users.length, ...res.users);
     });
 }

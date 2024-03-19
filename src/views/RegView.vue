@@ -5,7 +5,7 @@ import { axiosSymbol } from '@/symbols';
 import { NSteps, NStep, NButton, NForm, NFormItem, NInput, NCard, type FormRules, type FormInst } from 'naive-ui';
 import { inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-
+import qrcode from '@/assets/qrcode.jpg'
 
 const props = defineProps<{
   step: number,
@@ -182,8 +182,9 @@ function gotoGitlab() {
           <div class="3_hint" v-else>
             <h1>{{ $t('regview.registered_success') }}</h1>
           </div>
-          <p>{{ $t('regview.scan_qrcode') }}</p>
-          <img class="qrcode" src="./qrcode.jpg" />
+          <p style="margin-bottom: 10px;">{{ $t('regview.scan_qrcode') }}</p>
+          <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=wu5NdwVWNFOs3Bflp_IMcdm_kSw-QDzF&jump_from=webapi&authKey=cZx9iftF0LgUbDCuxPkjOkK1g3rv84I0lyLXlNf/bT09gvgP/36MllnFjEfI7bwe"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="清华幻协百团大战周四" title="清华幻协百团大战周四"></a>
+          <img :src="qrcode" class="qrcode" />
         </div>
       </div>
     </n-card>

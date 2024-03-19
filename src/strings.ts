@@ -27,7 +27,7 @@ const strings = {
       },
       registered_already: 'You have registered already.',
       registered_success: 'You have registered successfully.',
-      scan_qrcode: 'Scan the QR Code below to join our QQ group.',
+      scan_qrcode: 'Click the link or scan the QR Code below to join our QQ group.',
     },
     errorview: {
       internal_error: 'Internal Server Error',
@@ -74,7 +74,7 @@ const strings = {
       },
       registered_already: '您已经注册过了',
       registered_success: '注册成功',
-      scan_qrcode: '扫描下方二维码加入我们的QQ群',
+      scan_qrcode: '点击按钮或扫描下方二维码加入我们的QQ群',
     },
     errorview: {
       internal_error: '内部服务器错误',

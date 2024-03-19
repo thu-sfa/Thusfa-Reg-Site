@@ -36,3 +36,8 @@ export interface AllUsersResponse {
     users: User[];
     total: number;
 }
+
+export interface Problem {
+    question: string;
+    options: string[];
+}
