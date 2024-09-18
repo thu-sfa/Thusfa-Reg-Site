@@ -4,6 +4,7 @@ WORKDIR /app
 # copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
 # install dependencies
+RUN npm config set registry http://mirrors.cloud.tencent.com/npm/
 RUN npm install -g pnpm
 RUN pnpm install
 # copy the rest of the app
